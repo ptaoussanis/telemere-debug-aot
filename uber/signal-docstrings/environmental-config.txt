@@ -1,0 +1,56 @@
+Telemere supports extensive environmental config via JVM properties,
+environment variables, or classpath resources.
+
+Environmental filter config includes:
+
+  Kind filter:
+          JVM property: `taoensso.telemere.rt-kind-filter`
+          Env variable: `TAOENSSO_TELEMERE_RT_KIND_FILTER`
+    Classpath resource: `taoensso.telemere.rt-kind-filter`
+
+  Namespace filter:
+          JVM property: `taoensso.telemere.rt-ns-filter`
+          Env variable: `TAOENSSO_TELEMERE_RT_NS_FILTER`
+    Classpath resource: `taoensso.telemere.rt-ns-filter`
+
+  Id filter:
+          JVM property: `taoensso.telemere.rt-id-filter`
+          Env variable: `TAOENSSO_TELEMERE_RT_ID_FILTER`
+    Classpath resource: `taoensso.telemere.rt-id-filter`
+
+  Minimum level:
+          JVM property: `taoensso.telemere.rt-min-level`
+          Env variable: `TAOENSSO_TELEMERE_RT_MIN_LEVEL`
+    Classpath resource: `taoensso.telemere.rt-min-level`
+
+Values are edn, examples:
+
+  `taoensso.telemere.rt-min-level`       -> ":info"
+  `TAOENSSO_TELEMERE_RT_NS_FILTER`       -> "{:disallow \"taoensso.*\"}"
+  `taoensso.telemere.rt-id-filter.cljs`  -> "#{:my-id1 :my-id2}"
+  `TAOENSSO_TELEMERE_RT_KIND_FILTER_CLJ` -> "nil"
+
+For other (non-filter) environmental config, see the relevant docstrings.
+
+Tips:
+
+  - The above ids are for runtime filters (the most common).
+    For compile-time filters, change `rt`->`ct` / `RT`->`CT`.
+
+  - The above ids will affect both Clj AND Cljs.
+    For platform-specific filters, use
+      ".clj.edn"  / "_CLJ_EDN"  or
+      ".cljs.edn" / "_CLJS_EDN" suffixes instead.
+
+  - Optional ".edn" / "_EDN" suffixes may be added for clarity.
+
+  - To get the right edn syntax, first set your runtime filters using the
+    standard utils (`set-min-level!`, etc.). Then call `get-filters` and
+    serialize the relevant parts to edn with `pr-str`.
+
+  - All environmental config uses `get-env` underneath.
+    See the `get-env` docstring for more/advanced details.
+
+  - Classpath resources are files accessible on your project's
+    classpath. This usually includes files in your project's
+    `resources/` dir.

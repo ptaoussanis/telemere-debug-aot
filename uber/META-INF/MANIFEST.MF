@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Created-By: Leiningen 2.11.2
+Built-By: ptaoussanis
+Build-Jdk: 23.0.2
+Leiningen-Project-ArtifactId: telemere-aot
+Leiningen-Project-GroupId: telemere-aot
+Leiningen-Project-Version: 0.1.0-SNAPSHOT
+Main-Class: telemere_aot.core
+

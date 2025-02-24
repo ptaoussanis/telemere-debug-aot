@@ -1,0 +1,29 @@
+Low-level "generic" signal creator for creating signals of any "kind".
+Takes a single map of options [2] with compile-time keys.
+
+Return value depends on options:
+  - If given `:run` form: unconditionally returns run value, or rethrows run error.
+  - Otherwise: returns true iff signal was created (allowed by filtering).
+
+Default  kind: `:generic` (feel free to change!)
+Default level: `:info`
+
+When filtering conditions are met [4], creates a Telemere signal [3] and
+dispatches it to registered handlers for processing (e.g. writing to
+console/file/queue/db, etc.).
+
+Generic signals are fairly low-level and useful mostly for library authors or
+advanced users writing their own wrapper macros. Regular users will typically
+prefer one of the higher-level signal creators optimized for ease-of-use in
+common cases [1].
+
+Tips:
+
+  - Test using `with-signal`: (with-signal (signal! ...)).
+  - Supports the same options [2] as other signals [1].
+
+----------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-filters`  - (by ns/kind/id/level, sampling, etc.)

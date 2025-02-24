@@ -1,0 +1,88 @@
+"Trace" signal creator, emphasizing (optional id) + form to run.
+ALWAYS (unconditionally) returns run value, or rethrows run error.
+
+Default  kind: `:trace`
+Default level: `:info` (intentionally NOT `:trace`!)
+
+When filtering conditions are met [4], creates a Telemere signal [3] and
+dispatches it to registered handlers for processing (e.g. writing to
+console/file/queue/db, etc.).
+
+Enables tracing of given `run` form:
+
+  - Resulting signal  will include {:keys [run-form run-val run-nsecs]}.
+  - Nested    signals will include this signal's id and uid under `:parent`.
+
+Limitations:
+
+  1. Traced `run` form is usually expected to be synchronous and eager.
+     So no lazy seqs, async calls, or inversion of flow control (IoC) macros like
+     core.async `go` blocks, etc.
+
+  2. Tracing call (`trace!`) is usually expected to occur *within* normally flowing code.
+     IoC macros can arbitrarily (and often opaquely) alter program flow and tracing
+     across flow boundaries can be fragile or even fundamentally illogical.
+
+     So use within IoC macro bodies might not make conceptual sense, or could produce
+     errors or unreliable/confusing results.
+
+     Basically- if possible, prefer tracing normal Clojure fns running within normal
+     Clojure fns unless you deeply understand what your IoC macros are up to.
+
+Examples:
+
+  (trace! (+ 1 2))         ; %> {:kind :trace, :level :info, :run-form '(+ 1 2),
+                           ;     :run-val 3, :run-nsecs <int>, :parent {:keys [id uid]} ...
+                           ;     :msg "(+ 1 2) => 3" ...}
+  (trace! ::my-id (+ 1 2)) ; %> {... :id ::my-id ...}
+  (trace!
+    {:let  [x "x"] ; Available to `:data` and `:msg`
+     :data {:x x}
+     :msg  ["My message:" x]}
+
+    (+ 1 2)) ; %> {... :data {x "x"}, :msg_ "My msg: x" ...}
+
+Tips:
+
+  - Test using `with-signal`: (with-signal (trace! ...)).
+  - Supports the same options [2] as other signals [1].
+
+  - Like `spy!`, but takes optional id rather than optional level.
+
+  - Useful for debugging/monitoring forms, and tracing (nested) execution flow.
+  - Execution of `run` form may create additional (nested) signals.
+    Each signal's `:parent` key will indicate its immediate parent.
+
+  - It's often useful to wrap `run` form with `catch->error!`:
+      (trace! ::trace-id (catch->error! ::error-id ...)).
+
+    This way you have independent filtering for `run` forms that throw,
+    allowing you to use a higher min level and/or reduced sampling, etc.
+
+    In this case you'll create:
+      0 or 1 `:trace` signals (depending on filtering), AND
+      0 or 1 `:error` signals (depending on filtering).
+
+    Note that the `:error` signal will contain tracing info (e.g. `:parent` key)
+    iff the enclosing `trace!` is allowed.
+
+  - Default level is `:info`, not `:trace`! The name "trace" in "trace signal"
+    refers to the general action of tracing program flow rather than to the
+    common logging level of the same name.
+
+  - Runtime of async or lazy code in `run` form will intentionally NOT be
+    included in resulting signal's `:run-nsecs` value. If you want to measure
+    such runtimes, make sure that your form wraps where the relevant costs are
+    actually realized. Compare:
+      (trace!  (delay (my-slow-code))) ; Doesn't measure slow code
+      (trace! @(delay (my-slow-code))) ; Does    measure slow code
+
+  - See also Tufte (https://www.taoensso.com/tufte) for a complementary/partner
+    Clj/s library that offers more advanced performance measurment and shares
+    the same signal engine (filtering and handler API) as Telemere.
+
+----------------------------------------------------------------------
+[1] See `help:signal-creators` - (`signal!`, `log!`, `event!`, ...)
+[2] See `help:signal-options`  - {:keys [kind level id data ...]}
+[3] See `help:signal-content`  - {:keys [kind level id data ...]}
+[4] See `help:signal-filters`  - (by ns/kind/id/level, sampling, etc.)
